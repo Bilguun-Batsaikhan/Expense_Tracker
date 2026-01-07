@@ -1,24 +1,18 @@
-package com.example.expense_tracker.Entities;
+package com.example.expense_tracker.entities;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
+import org.apache.catalina.User;
 import org.hibernate.annotations.UuidGenerator;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,26 +25,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table
-public class Users {
+public class Category {
     @Id
-    @UuidGenerator 
+    @UuidGenerator
     private UUID id;
-    @Column(unique = true)
     @NotNull
-    @Email
-    private String email;
-    @NotNull
-    @NotBlank
-    private String password; // The hashing should be done in the service
-    @Column(name = "full_name")
-    @NotNull
-    private String fullName;
-    private boolean enabled;
+    private String name;
+    private String description;
+    private boolean isDefault;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    @PrePersist
+        @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -60,7 +47,7 @@ public class Users {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-    @ManyToMany(mappedBy = "users", cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // deleting a user removes entries from user_role
-    @JsonBackReference
-    private Set<Roles> roles = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }
