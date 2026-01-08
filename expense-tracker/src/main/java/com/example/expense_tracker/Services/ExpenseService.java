@@ -1,6 +1,5 @@
 package com.example.expense_tracker.Services;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,27 +47,33 @@ public class ExpenseService {
     }
 
     public ExpenseResponseDto get(UUID id) {
-        Expense entity = expenseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + id));
-        if(!validateUser(entity.getUser()))
+        Expense entity = expenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + id));
+        if (!validateUser(entity.getUser()))
             throw new UnauthorizedAccessException("User with id: " + entity.getUser().getId() + "is not authorized");
         return expenseMapper.toDto(entity);
     }
 
-    public List<ExpenseResponseDto> getAll(int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("expenseDate").descending());
+    public Page<ExpenseResponseDto> getAll(Pageable pageable) {
+        Pageable safePageable = PageRequest.of(
+                Math.max(pageable.getPageNumber(), 0),
+                Math.min(pageable.getPageSize(), 50),
+                Sort.by("expenseDate").descending());
+
         // for now retrieve all regardless of the user, like an admin. Future return
         // only for users.
-        Page<Expense> page = expenseRepository.findByDeletedFalse(pageable);
+        Page<Expense> page = expenseRepository.findByDeletedFalse(safePageable);
         // return page.getContent().stream().map(expenseMapper::toDto).toList();
-        return page.map(expenseMapper::toDto).getContent();
+        return page.map(expenseMapper::toDto);
     }
 
     public ExpenseResponseDto update(ExpenseRequestDto req, UUID id)
             throws UnauthorizedAccessException, ResourceNotFoundException {
-        Expense entity = expenseRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Expense not found with id: " + id));
-        if(!validateUser(entity.getUser()))
+        Expense entity = expenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + id));
+        if (!validateUser(entity.getUser()))
             throw new UnauthorizedAccessException("User with id: " + entity.getUser().getId() + "is not authorized");
-        
+
         entity.setAmount(req.getAmount());
         entity.setCurrency(req.getCurrency());
         entity.setDescription(req.getDescription());
