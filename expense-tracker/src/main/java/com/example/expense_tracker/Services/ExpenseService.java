@@ -1,7 +1,13 @@
 package com.example.expense_tracker.Services;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.expense_tracker.Repositories.ExpenseRepository;
@@ -15,7 +21,6 @@ import com.example.expense_tracker.entities.Expense;
 import com.example.expense_tracker.entities.User;
 import com.example.expense_tracker.mapper.ExpenseMapper;
 
-//todo replace getById with findById
 @Service
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
@@ -23,8 +28,8 @@ public class ExpenseService {
     private final ExpenseMapper expenseMapper;
     private final UserService userService;
 
-
-    public ExpenseService(ExpenseRepository expenseRepository, CategoryRepository categoryRepository ,ExpenseMapper expenseMapper, UserService userService) {
+    public ExpenseService(ExpenseRepository expenseRepository, CategoryRepository categoryRepository,
+            ExpenseMapper expenseMapper, UserService userService) {
         this.expenseRepository = expenseRepository;
         this.expenseMapper = expenseMapper;
         this.userService = userService;
@@ -33,7 +38,8 @@ public class ExpenseService {
 
     public ExpenseResponseDto create(ExpenseRequestDto req) {
         Expense entity = expenseMapper.toEntity(req);
-        Category category = categoryRepository.getById(req.getCategoryId());
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + req.getCategoryId()));
         entity.setCategory(category);
         User user = userService.getCurrentUser();
         entity.setUser(user);
@@ -41,41 +47,42 @@ public class ExpenseService {
         return expenseMapper.toDto(entity);
     }
 
-    public ExpenseResponseDto get(UUID id) throws UnauthorizedAccessException, ResourceNotFoundException {
-        Expense entity = expenseRepository.getById(id);
-        if(entity != null) {
-            // compare them by id not by instance!
-            if(!entity.getUser().equals(userService.getCurrentUser())) {
-                throw new UnauthorizedAccessException();
-            }
-        } else {
-            throw new ResourceNotFoundException();
-        }
+    public ExpenseResponseDto get(UUID id) {
+        Expense entity = expenseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + id));
+        if(!validateUser(entity.getUser()))
+            throw new UnauthorizedAccessException("User with id: " + entity.getUser().getId() + "is not authorized");
         return expenseMapper.toDto(entity);
     }
 
-    public List<ExpenseResponseDto> getAll() {
-        // instead of loading all expenses configure softdelete in the jpa query, at db level
-        return expenseRepository.findAll().stream().filter(e -> !e.isDeleted()).map(expenseMapper::toDto).toList();
+    public List<ExpenseResponseDto> getAll(int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("expenseDate").descending());
+        // for now retrieve all regardless of the user, like an admin. Future return
+        // only for users.
+        Page<Expense> page = expenseRepository.findByDeletedFalse(pageable);
+        // return page.getContent().stream().map(expenseMapper::toDto).toList();
+        return page.map(expenseMapper::toDto).getContent();
     }
-    //todo: make validate user a method
-    public ExpenseResponseDto update(ExpenseRequestDto req, UUID id) throws UnauthorizedAccessException, ResourceNotFoundException {
-        Expense entity = expenseRepository.getById(id);
-        if(entity != null) {
-            if(!entity.getUser().equals(userService.getCurrentUser())) {
-                throw new UnauthorizedAccessException();
-            }
-        } else {
-            throw new ResourceNotFoundException();
-        }
+
+    public ExpenseResponseDto update(ExpenseRequestDto req, UUID id)
+            throws UnauthorizedAccessException, ResourceNotFoundException {
+        Expense entity = expenseRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Expense not found with id: " + id));
+        if(!validateUser(entity.getUser()))
+            throw new UnauthorizedAccessException("User with id: " + entity.getUser().getId() + "is not authorized");
+        
         entity.setAmount(req.getAmount());
         entity.setCurrency(req.getCurrency());
         entity.setDescription(req.getDescription());
         entity.setExpenseDate(req.getExpenseDate());
-        if(!entity.getCategory().getId().equals(req.getCategoryId())) {
-            Category category = categoryRepository.getById(req.getCategoryId());
-            entity.setCategory(category);
+        if (!entity.getCategory().getId().equals(req.getCategoryId())) {
+            Optional<Category> category = categoryRepository.findById(req.getCategoryId());
+            if (category.isEmpty())
+                throw new ResourceNotFoundException();
+            entity.setCategory(category.get());
         }
         return expenseMapper.toDto(entity);
+    }
+
+    public boolean validateUser(User user) {
+        return user.getId().equals(userService.getCurrentUser().getId());
     }
 }

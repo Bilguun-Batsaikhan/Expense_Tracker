@@ -3,7 +3,6 @@ package com.example.expense_tracker.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.apache.catalina.User;
 import org.hibernate.annotations.UuidGenerator;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +23,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table
+@Table(name = "categories")
 public class Category {
     @Id
     @UuidGenerator
