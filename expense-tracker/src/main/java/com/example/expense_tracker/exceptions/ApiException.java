@@ -1,6 +1,6 @@
 package com.example.expense_tracker.exceptions;
 
-import com.example.expense_tracker.enums.ApiExceptionsEnum;
+import com.example.expense_tracker.enums.ErrorCode;
 
 import lombok.Getter;
 
@@ -8,15 +8,15 @@ import lombok.Getter;
 public class ApiException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    private final ApiExceptionsEnum apiExceptionsEnum;
+    private final ErrorCode apiExceptionsEnum;
     private Exception exception;
 
-    public ApiException(ApiExceptionsEnum apiExceptionsEnum) {
+    public ApiException(ErrorCode apiExceptionsEnum) {
         super();
         this.apiExceptionsEnum = apiExceptionsEnum;
     }
 
-    public ApiException(ApiExceptionsEnum apiExceptionsEnum, Exception exception) {
+    public ApiException(ErrorCode apiExceptionsEnum, Exception exception) {
         super();
         this.apiExceptionsEnum = apiExceptionsEnum;
         this.exception = exception;

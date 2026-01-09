@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
 
-import com.example.expense_tracker.enums.ApiExceptionsEnum;
+import com.example.expense_tracker.enums.ErrorCode;
 
 public record ApiError(
         int status,
@@ -21,7 +21,7 @@ public record ApiError(
                 Instant.now());
     }
 
-    public static ApiError of(ApiExceptionsEnum exceptionsEnum) {
+    public static ApiError of(ErrorCode exceptionsEnum) {
         return new ApiError(exceptionsEnum.getHttpStatus().value(), exceptionsEnum.getHttpStatus().getReasonPhrase(),
                 exceptionsEnum.getDescription(), null, Instant.now());
     }

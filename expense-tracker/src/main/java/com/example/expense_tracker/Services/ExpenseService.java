@@ -16,7 +16,7 @@ import com.example.expense_tracker.dto.expense.ExpenseResponseDto;
 import com.example.expense_tracker.entities.Category;
 import com.example.expense_tracker.entities.Expense;
 import com.example.expense_tracker.entities.User;
-import com.example.expense_tracker.enums.ApiExceptionsEnum;
+import com.example.expense_tracker.enums.ErrorCode;
 import com.example.expense_tracker.exceptions.ApiException;
 import com.example.expense_tracker.mapper.ExpenseMapper;
 
@@ -38,7 +38,7 @@ public class ExpenseService {
     public ExpenseResponseDto create(ExpenseRequestDto req) {
         Expense entity = expenseMapper.toEntity(req);
         Category category = categoryRepository.findById(req.getCategoryId())
-                .orElseThrow(() -> new ApiException(ApiExceptionsEnum.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         entity.setCategory(category);
         User user = userService.getCurrentUser();
         entity.setUser(user);
@@ -48,9 +48,9 @@ public class ExpenseService {
 
     public ExpenseResponseDto get(UUID id) {
         Expense entity = expenseRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ApiExceptionsEnum.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!validateUser(entity.getUser()))
-            throw new ApiException(ApiExceptionsEnum.AUTHORIZATION_FAILED);
+            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
         return expenseMapper.toDto(entity);
     }
 
@@ -69,9 +69,9 @@ public class ExpenseService {
 
     public ExpenseResponseDto update(ExpenseRequestDto req, UUID id) {
         Expense entity = expenseRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ApiExceptionsEnum.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!validateUser(entity.getUser()))
-            throw new ApiException(ApiExceptionsEnum.AUTHORIZATION_FAILED);
+            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
 
         entity.setAmount(req.getAmount());
         entity.setCurrency(req.getCurrency());
@@ -80,7 +80,7 @@ public class ExpenseService {
         if (!entity.getCategory().getId().equals(req.getCategoryId())) {
             Optional<Category> category = categoryRepository.findById(req.getCategoryId());
             if (category.isEmpty())
-                throw new ApiException(ApiExceptionsEnum.RESOURCE_NOT_FOUND);
+                throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND);
             entity.setCategory(category.get());
         }
         return expenseMapper.toDto(entity);
