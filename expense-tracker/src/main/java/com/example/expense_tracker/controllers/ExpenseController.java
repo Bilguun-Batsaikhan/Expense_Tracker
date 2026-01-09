@@ -33,6 +33,7 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
+    @Operation(summary = "Create new expense")
     @PostMapping
     public ResponseEntity<ExpenseResponseDto> createExpense(
             @Valid @RequestBody ExpenseRequestDto request) {
@@ -47,6 +48,7 @@ public class ExpenseController {
         return ResponseEntity.created(location).body(saved);
     }
 
+    @Operation(summary = "Get expense by id")
     @GetMapping("/{id}")
     public ResponseEntity<ExpenseResponseDto> getExpense(@Valid @PathVariable UUID id) {
         // The controller only returns 200 OK if the service does NOT throw an
@@ -64,6 +66,7 @@ public class ExpenseController {
         return ResponseEntity.ok(new PagedResponse<>(page.getContent(), pData));
     }
 
+    @Operation(summary = "Update expense by id")
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponseDto> updateExpense(@Valid @PathVariable UUID id,
             @RequestBody ExpenseRequestDto req) {
