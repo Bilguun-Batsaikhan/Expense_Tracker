@@ -1,28 +1,35 @@
 package com.example.expense_tracker.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
+import lombok.Singular;
+import lombok.Value;
+
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
 
-import org.springframework.http.HttpStatus;
+@Value
+@Builder(toBuilder = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiError {
+    String code;
+    String message;
+    int status;
+    String correlationId;
 
-import com.example.expense_tracker.enums.ErrorCode;
+    @Builder.Default
+    Instant timestamp = Instant.now();
 
-public record ApiError(
-        int status,
-        String error,
-        String message,
-        String path,
-        Instant timestamp) {
-    public static ApiError of(HttpStatus status, String message) {
-        return new ApiError(
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                null,
-                Instant.now());
-    }
+    // Lombok’s @Singular gives you both .detail(key, value) and .details(map)
+    // support.
+    @Singular("detail")
+    Map<String, Object> details;
 
-    public static ApiError of(ErrorCode exceptionsEnum) {
-        return new ApiError(exceptionsEnum.getHttpStatus().value(), exceptionsEnum.getHttpStatus().getReasonPhrase(),
-                exceptionsEnum.getDescription(), null, Instant.now());
+    // Ensure immutability (optional: override Lombok-generated getter)
+    public Map<String, Object> getDetails() {
+        if (details == null)
+            return Collections.emptyMap();
+        return Collections.unmodifiableMap(details);
     }
 }

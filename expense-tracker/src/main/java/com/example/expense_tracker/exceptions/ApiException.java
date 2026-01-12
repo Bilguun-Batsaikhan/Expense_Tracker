@@ -8,17 +8,17 @@ import lombok.Getter;
 public class ApiException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    private final ErrorCode apiExceptionsEnum;
+    private final ErrorCode errorCode;
     private Exception exception;
 
-    public ApiException(ErrorCode apiExceptionsEnum) {
+    public ApiException(ErrorCode errorCode) {
         super();
-        this.apiExceptionsEnum = apiExceptionsEnum;
+        this.errorCode = errorCode;
     }
 
-    public ApiException(ErrorCode apiExceptionsEnum, Exception exception) {
+    public ApiException(ErrorCode errorCode, Exception exception) {
         super();
-        this.apiExceptionsEnum = apiExceptionsEnum;
+        this.errorCode = errorCode;
         this.exception = exception;
     }
 }

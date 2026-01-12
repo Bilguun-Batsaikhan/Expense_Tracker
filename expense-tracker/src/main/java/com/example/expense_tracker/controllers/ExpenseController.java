@@ -37,6 +37,12 @@ public class ExpenseController {
     }
 
     @Operation(summary = "Create new expense")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Expense found"),
+            @ApiResponse(responseCode = "400", description = "INVALID_INPUT"),
+            @ApiResponse(responseCode = "403", description = "AUTHORIZATION_FAILED"),
+            @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
+    })
     @PostMapping
     public ResponseEntity<ExpenseResponseDto> createExpense(
             @Valid @RequestBody ExpenseRequestDto request) {
