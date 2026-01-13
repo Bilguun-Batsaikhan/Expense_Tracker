@@ -60,16 +60,17 @@ public class ExpenseService {
     }
 
     public Page<ExpenseResponseDto> getAll(Pageable pageable) {
+        User user = userService.getCurrentUser();
+        String currentUserEmail = user.getEmail();
+
         Pageable safePageable = PageRequest.of(
                 Math.max(pageable.getPageNumber(), 0),
                 Math.min(pageable.getPageSize(), 50),
                 Sort.by("expenseDate").descending());
 
-        // for now retrieve all regardless of the user, like an admin. Future return
-        // only for users.
-        Page<Expense> page = expenseRepository.findByDeletedFalse(safePageable);
-        logger.info("Fetching paged expenses");
-        // return page.getContent().stream().map(expenseMapper::toDto).toList();
+        Page<Expense> page = expenseRepository.findByUserEmailAndDeletedFalse(currentUserEmail, safePageable);
+
+        logger.info("Fetching paged expenses for user: {}", currentUserEmail);
         return page.map(expenseMapper::toDto);
     }
 
