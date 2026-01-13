@@ -2,7 +2,7 @@ package com.example.expense_tracker.Services;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.expense_tracker.Repositories.UserRepository;
 import com.example.expense_tracker.dto.authorization.LoginDto;
 import com.example.expense_tracker.dto.authorization.RegisterDto;
@@ -24,8 +24,9 @@ public class UserService {
     }
 
     public User getCurrentUser() {
-        return userRepository.findAll().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("No users in DB"));
+        return (User) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 
     public String registerUser(RegisterDto registerDto) {
@@ -36,12 +37,16 @@ public class UserService {
         return "Registered Succesfully!";
     }
 
-    public String loginUser(LoginDto loginDto) {
+    public User loginUser(LoginDto loginDto) {
         User user = userRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new ApiException(ErrorCode.AUTHENTICATION_FAILED));
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorCode.AUTHENTICATION_FAILED);
         }
-        return "Login successful";
+        return user;
+    }
+
+    public User getUser(String Email) {
+        return userRepository.findByEmail(Email).orElseThrow(() -> new ApiException(ErrorCode.AUTHENTICATION_FAILED));
     }
 }
