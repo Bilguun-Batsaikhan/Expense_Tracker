@@ -12,7 +12,7 @@ import com.example.expense_tracker.entities.User;
 
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     // Spring Data navigates from Expense -> User -> email
-    Page<Expense> findByUserEmailAndDeletedFalse(String email, Pageable pageable);
+    public Page<Expense> findByUserEmailAndDeletedFalse(String email, Pageable pageable);
 
     // returns a Expense that is not deleted
     public Optional<Expense> findByIdAndDeletedFalse(UUID id);
