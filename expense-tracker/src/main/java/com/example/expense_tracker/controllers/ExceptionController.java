@@ -20,67 +20,72 @@ import com.example.expense_tracker.exceptions.ApiException;
 
 @RestControllerAdvice
 public class ExceptionController {
-    private static final Logger logger = LoggerFactory.getLogger(ExceptionController.class);
+        public ExceptionController() {
+                super();
+                // TODO Auto-generated constructor stub
+        }
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiError> handleApiExceptions(ApiException exception) {
-        logger.warn(
-                "ApiException [{}] correlationId={}",
-                exception.getErrorCode().getHttpStatus().value(),
-                MDC.get("X-Correlation-Id"),
-                exception);
+        private static final Logger logger = LoggerFactory.getLogger(ExceptionController.class);
 
-        String correlationId = MDC.get("X-Correlation-Id");
+        @ExceptionHandler(ApiException.class)
+        public ResponseEntity<ApiError> handleApiExceptions(ApiException exception) {
+                logger.warn(
+                                "ApiException [{}] correlationId={}",
+                                exception.getErrorCode().getHttpStatus().value(),
+                                MDC.get("X-Correlation-Id"),
+                                exception);
 
-        ApiError error = ApiError.builder()
-                .code(exception.getErrorCode().name())
-                .message(exception.getErrorCode().getDescription())
-                .status(exception.getErrorCode().getHttpStatus().value())
-                .correlationId(correlationId)
-                .timestamp(Instant.now())
-                .build();
-        return ResponseEntity
-                .status(error.getStatus())
-                .body(error);
-    }
+                String correlationId = MDC.get("X-Correlation-Id");
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
+                ApiError error = ApiError.builder()
+                                .code(exception.getErrorCode().name())
+                                .message(exception.getErrorCode().getDescription())
+                                .status(exception.getErrorCode().getHttpStatus().value())
+                                .correlationId(correlationId)
+                                .timestamp(Instant.now())
+                                .build();
+                return ResponseEntity
+                                .status(error.getStatus())
+                                .body(error);
+        }
 
-        Map<String, String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .collect(Collectors.toMap(
-                        FieldError::getField,
-                        FieldError::getDefaultMessage,
-                        (a, b) -> a));
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
 
-        ApiError error = ApiError.builder()
-                .code(ErrorCode.INVALID_INPUT.name())
-                .message("Validation failed")
-                .status(HttpStatus.BAD_REQUEST.value())
-                .details(errors)
-                .correlationId(MDC.get("X-Correlation-Id"))
-                .build();
+                Map<String, String> errors = ex.getBindingResult()
+                                .getFieldErrors()
+                                .stream()
+                                .collect(Collectors.toMap(
+                                                FieldError::getField,
+                                                FieldError::getDefaultMessage,
+                                                (a, b) -> a));
 
-        logger.warn("Validation failed: {}", errors);
+                ApiError error = ApiError.builder()
+                                .code(ErrorCode.INVALID_INPUT.name())
+                                .message("Validation failed")
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .details(errors)
+                                .correlationId(MDC.get("X-Correlation-Id"))
+                                .build();
 
-        return ResponseEntity.badRequest().body(error);
-    }
+                logger.warn("Validation failed: {}", errors);
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
+                return ResponseEntity.badRequest().body(error);
+        }
 
-        logger.error("Unexpected error", ex);
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
 
-        ApiError error = ApiError.builder()
-                .code("UNEXPECTED_ERROR")
-                .message("Something went wrong")
-                .status(500)
-                .correlationId(MDC.get("X-Correlation-Id"))
-                .build();
+                logger.error("Unexpected error", ex);
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
+                ApiError error = ApiError.builder()
+                                .code("UNEXPECTED_ERROR")
+                                .message("Something went wrong")
+                                .status(500)
+                                .correlationId(MDC.get("X-Correlation-Id"))
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
 
 }

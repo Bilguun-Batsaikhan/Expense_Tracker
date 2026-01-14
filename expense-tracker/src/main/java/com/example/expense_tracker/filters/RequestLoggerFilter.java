@@ -38,11 +38,11 @@ public class RequestLoggerFilter extends OncePerRequestFilter {
             int status = response.getStatus();
 
             if (status >= 500) {
-                logger.error("{} {} -> {} ({} ms)", method, uri, status, duration);
+                logger.error("METHOD: {} URI: {} -> STATUS: {} (DURATION: {} ms)", method, uri, status, duration);
             } else if (status >= 400) {
-                logger.warn("{} {} -> {} ({} ms)", method, uri, status, duration);
+                logger.warn("METHOD: {} URI: {} -> STATUS: {} (DURATION: {} ms)", method, uri, status, duration);
             } else {
-                logger.info("{} {} -> {} ({} ms)", method, uri, status, duration);
+                logger.info("METHOD: {} URI: {} -> STATUS: {} (DURATION: {} ms)", method, uri, status, duration);
             }
         }
     }
