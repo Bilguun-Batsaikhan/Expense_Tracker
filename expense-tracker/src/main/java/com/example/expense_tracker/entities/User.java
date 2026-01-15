@@ -6,9 +6,9 @@ import java.util.Set;
 import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -31,6 +31,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @UuidGenerator
     private UUID id;
@@ -63,7 +64,11 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id"), inverseJoinColumns = @JoinColumn(name = "roles_id"))
     private Set<Role> roles = new HashSet<>();
+
+    public User(UUID id) {
+        this.id = id;
+    }
 }

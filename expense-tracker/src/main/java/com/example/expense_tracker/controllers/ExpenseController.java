@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class ExpenseController {
                         @ApiResponse(responseCode = "403", description = "AUTHORIZATION_FAILED"),
                         @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
         })
+        @PreAuthorize("hasRole('USER')")
         @PostMapping
         public ResponseEntity<ExpenseResponseDto> createExpense(
                         @Valid @RequestBody ExpenseRequestDto request) {
@@ -59,6 +61,7 @@ public class ExpenseController {
                 return ResponseEntity.created(location).body(saved);
         }
 
+        @PreAuthorize("hasRole('USER')") // add also admin?
         @Operation(summary = "Get expense by id")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Expense found"),
@@ -71,7 +74,7 @@ public class ExpenseController {
                 // The controller only returns 200 OK if the service does NOT throw an
                 // exception.
                 // If an exception is thrown, the controller method never completes.
-                return ResponseEntity.ok(expenseService.get(id));
+                return ResponseEntity.ok(expenseService.getExpenseForCurrentUser(id));
         }
 
         @Operation(summary = "Get expenses with pagination")

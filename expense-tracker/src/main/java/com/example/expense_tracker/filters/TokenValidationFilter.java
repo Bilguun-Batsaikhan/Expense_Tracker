@@ -1,10 +1,13 @@
 package com.example.expense_tracker.filters;
 
 import java.io.IOException;
-import java.util.List;
+// import java.util.List;
+// import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+// import org.springframework.security.core.GrantedAuthority;
+// import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -12,10 +15,12 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import com.example.expense_tracker.Services.JwtService;
 import com.example.expense_tracker.Services.UserService;
+import com.example.expense_tracker.dto.CustomUserDetails;
 import com.example.expense_tracker.entities.User;
 import com.example.expense_tracker.enums.ErrorCode;
 import com.example.expense_tracker.exceptions.ApiException;
 
+// import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,8 +37,8 @@ public class TokenValidationFilter extends OncePerRequestFilter {
             UserService userService,
             @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         this.jwtService = jwtService;
-        this.userService = userService;
         this.resolver = resolver;
+        this.userService = userService;
     }
 
     @Override
@@ -55,11 +60,26 @@ public class TokenValidationFilter extends OncePerRequestFilter {
                 throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
             }
 
+            // Claims claims = jwtService.extractAllClaims(token);
             String email = jwtService.extractEmail(token);
+            // UUID userId = UUID.fromString(claims.get("userId", String.class));
             User user = userService.getUser(email);
 
+            CustomUserDetails userDetails = new CustomUserDetails(user);
+            // List<GrantedAuthority> authorities = jwtService.extractRoles(claims)
+            // .stream()
+            // .<GrantedAuthority>map(SimpleGrantedAuthority::new)
+            // .toList();
+
+            // UsernamePasswordAuthenticationToken authentication = new
+            // UsernamePasswordAuthenticationToken(
+            // userId,
+            // null,
+            // authorities);
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    user, null, List.of());
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 

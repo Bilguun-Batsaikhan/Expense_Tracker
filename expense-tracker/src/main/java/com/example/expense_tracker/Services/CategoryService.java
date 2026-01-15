@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.expense_tracker.Repositories.CategoryRepository;
+import com.example.expense_tracker.dto.CustomUserDetails;
 import com.example.expense_tracker.dto.category.CategoryRequestDto;
 import com.example.expense_tracker.dto.category.CategoryResponseDto;
 import com.example.expense_tracker.entities.Category;
@@ -58,7 +59,7 @@ public class CategoryService {
     }
 
     public Page<CategoryResponseDto> getCategoriesForCurrentUser(Pageable pageable) {
-        String email = userService.getCurrentUser().getEmail();
+        String email = userService.getCurrentUserDetails().getUsername(); // UserDetails username in this case email
         Pageable safPageable = PageRequest.of(Math.max(pageable.getPageNumber(), 0),
                 Math.min(pageable.getPageSize(), 50), Sort.by("name"));
 
@@ -73,27 +74,33 @@ public class CategoryService {
     }
 
     public CategoryResponseDto createCategoryForCurrentUser(CategoryRequestDto dto) {
-        User currentUser = userService.getCurrentUser();
+        CustomUserDetails currentUser = userService.getCurrentUserDetails();
 
-        if (categoryRepository.existsByNameAndUserEmail(dto.getName(), currentUser.getEmail())) {
+        if (categoryRepository.existsByNameAndUserId(dto.getName(), currentUser.getId())) {
             throw new ApiException(ErrorCode.DUPLICATE_ENTRY);
         }
 
         Category category = categoryMapper.toEntity(dto);
-        category.setUser(currentUser);
+        /*
+         * public User(UUID id) {
+         * this.id = id;
+         * }
+         * this alone won't save the user email, so mapper will return email null
+         */
+        category.setUser(new User(currentUser.getId()));
 
         Category savedCategory = categoryRepository.save(category);
 
-        logger.info("Category '{}' created for user: {}", savedCategory.getName(), currentUser.getEmail());
-        return categoryMapper.toDto(savedCategory);
+        logger.info("Category '{}' created for user: {}", savedCategory.getName(), currentUser.getUsername());
+        return categoryMapper.toDtoWithEmail(savedCategory, currentUser.getUsername());
     }
 
     public CategoryResponseDto updateCategoryForCurrentUser(CategoryRequestDto dto, UUID id) {
-        User currentUser = userService.getCurrentUser();
+        CustomUserDetails currentUser = userService.getCurrentUserDetails();
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        if (!currentUser.getEmail().equals(category.getUser().getEmail()))
+        if (!currentUser.getUsername().equals(category.getUser().getEmail()))
             throw new ApiException(ErrorCode.FORBIDDEN);
 
         if (category.isDefault())
@@ -102,12 +109,12 @@ public class CategoryService {
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
 
-        logger.info("Category with id={} updated by user: {}", id, currentUser.getEmail());
+        logger.info("Category with id={} updated by user: {}", id, currentUser.getUsername());
         return categoryMapper.toDto(category);
     }
 
     public String deleteCategoryForCurrentUser(UUID id) {
-        String currentUserEmail = userService.getCurrentUser().getEmail();
+        String currentUserEmail = userService.getCurrentUserDetails().getUsername(); // username is the email
 
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));

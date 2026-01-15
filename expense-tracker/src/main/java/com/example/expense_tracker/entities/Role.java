@@ -1,8 +1,10 @@
 package com.example.expense_tracker.entities;
 
 import java.util.UUID;
-import org.hibernate.annotations.UuidGenerator;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +21,11 @@ import lombok.Setter;
 @Entity
 public class Role {
     @Id
-    @UuidGenerator
+    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
     @NotNull
+    @Column(unique = true, nullable = false)
     private String name;
     // removed users
 }

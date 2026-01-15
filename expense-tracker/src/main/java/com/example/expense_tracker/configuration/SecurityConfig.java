@@ -1,5 +1,6 @@
 package com.example.expense_tracker.configuration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,7 +28,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 public class SecurityConfig {
         private final HandlerExceptionResolver resolver;
 
-        public SecurityConfig(HandlerExceptionResolver resolver) {
+        public SecurityConfig(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
                 this.resolver = resolver;
         }
 

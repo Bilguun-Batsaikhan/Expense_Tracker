@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,7 +59,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category found"),
             @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
     })
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> getCategoryById(@PathVariable UUID id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
@@ -70,6 +71,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
     })
     // /category/admin/user?email=test@example.com
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/user") // Changed path to avoid conflict with the default GET
     public ResponseEntity<List<CategoryResponseDto>> getCategoryByEmail(@RequestParam String email) {
         return ResponseEntity.ok(categoryService.getCategoriesForAdmin(email));

@@ -14,5 +14,7 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findAllByUserEmailAndUserEnabledTrue(String email);
 
+    boolean existsByNameAndUserId(String name, UUID userId);
+
     boolean existsByNameAndUserEmail(String name, String email);
 }

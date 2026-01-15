@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.expense_tracker.Repositories.ExpenseRepository;
 import com.example.expense_tracker.Repositories.CategoryRepository;
+import com.example.expense_tracker.dto.CustomUserDetails;
 import com.example.expense_tracker.dto.expense.ExpenseRequestDto;
 import com.example.expense_tracker.dto.expense.ExpenseResponseDto;
 import com.example.expense_tracker.entities.Category;
@@ -43,14 +44,15 @@ public class ExpenseService {
         Category category = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         entity.setCategory(category);
-        User user = userService.getCurrentUser();
-        entity.setUser(user);
+        CustomUserDetails currentUser = userService.getCurrentUserDetails();
+        // “Attach this entity by ID, do not fetch it”
+        entity.setUser(new User(currentUser.getId()));
         expenseRepository.save(entity);
-        logger.info("Expense is created for for user {}", userService.getCurrentUser().getId());
+        logger.info("Expense is created for for user {}", currentUser.getUsername());
         return expenseMapper.toDto(entity);
     }
 
-    public ExpenseResponseDto get(UUID id) {
+    public ExpenseResponseDto getExpenseForCurrentUser(UUID id) {
         Expense entity = expenseRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!validateUser(entity.getUser()))
@@ -60,8 +62,8 @@ public class ExpenseService {
     }
 
     public Page<ExpenseResponseDto> getAll(Pageable pageable) {
-        User user = userService.getCurrentUser();
-        String currentUserEmail = user.getEmail();
+        CustomUserDetails currentUser = userService.getCurrentUserDetails();
+        String currentUserEmail = currentUser.getUsername();
 
         Pageable safePageable = PageRequest.of(
                 Math.max(pageable.getPageNumber(), 0),
@@ -106,6 +108,6 @@ public class ExpenseService {
     }
 
     public boolean validateUser(User user) {
-        return user.getId().equals(userService.getCurrentUser().getId());
+        return user.getId().equals(userService.getCurrentUserDetails().getId());
     }
 }

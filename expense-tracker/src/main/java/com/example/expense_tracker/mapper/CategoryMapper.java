@@ -14,4 +14,8 @@ public interface CategoryMapper {
     public CategoryResponseDto toDto(Category category);
 
     public Category toEntity(CategoryRequestDto categoryRequestDto);
+
+    @Mapping(source = "category.name", target = "name")
+    @Mapping(source = "email", target = "createdBy")
+    CategoryResponseDto toDtoWithEmail(Category category, String email);
 }
