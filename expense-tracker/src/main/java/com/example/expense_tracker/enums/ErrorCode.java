@@ -6,24 +6,24 @@ import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
-    AUTHORIZATION_FAILED(123, "Authorization failed", HttpStatus.FORBIDDEN),
-    AUTHENTICATION_FAILED(401, "Authentication failed", HttpStatus.UNAUTHORIZED),
-    FORBIDDEN(403, "Missing permissions", HttpStatus.FORBIDDEN),
-    RESOURCE_NOT_FOUND(404, "Resource not found", HttpStatus.NOT_FOUND),
-    INVALID_INPUT(422, "Input validation failed", HttpStatus.BAD_REQUEST),
-    UNEXPECTED_ERROR(500, "Generic error", HttpStatus.INTERNAL_SERVER_ERROR),
+    // Identity Errors (401)
+    AUTHENTICATION_FAILED(4010, "Authentication failed", HttpStatus.UNAUTHORIZED),
+    INVALID_ACCESS_TOKEN(4011, "Invalid access token", HttpStatus.UNAUTHORIZED),
+    EXPIRED_ACCESS_TOKEN(4012, "Expired access token", HttpStatus.UNAUTHORIZED),
 
-    EXPIRED_ACCESS_TOKEN(1420, "Expired access token", HttpStatus.UNAUTHORIZED),
-    INVALID_REFRESH_TOKEN(1421, "Invalid refresh token", HttpStatus.UNAUTHORIZED),
-    INVALID_ACCESS_TOKEN(20103, "Invalid access token", HttpStatus.UNAUTHORIZED),
-    MALFORMED_ACCESS_TOKEN(401, "Malformed access token", HttpStatus.UNAUTHORIZED),
-    MALFORMED_REFRESH_TOKEN(401, "Malformed refresh token", HttpStatus.UNAUTHORIZED),
+    // Permission Errors (403)
+    FORBIDDEN(4030, "You do not have permission to access this resource", HttpStatus.FORBIDDEN),
+    AUTHORIZATION_FAILED(4031, "Authorization check failed", HttpStatus.FORBIDDEN),
+    USER_DISABLED(4032, "User account is disabled", HttpStatus.FORBIDDEN),
 
-    FOREIGN_KEY_CONSTRAINT_VIOLATION(1451, "Foreign key constraint violation", HttpStatus.CONFLICT),
-    DUPLICATE_ENTRY(1062, "Duplicate entry", HttpStatus.CONFLICT),
-    INVALID_EMAIL(1401, "Invalid email", HttpStatus.BAD_REQUEST),
+    // Request Errors (400 / 404 / 409)
+    RESOURCE_NOT_FOUND(4040, "Resource not found", HttpStatus.NOT_FOUND),
+    INVALID_INPUT(4000, "The provided input is invalid", HttpStatus.BAD_REQUEST),
+    DUPLICATE_ENTRY(4090, "This resource already exists", HttpStatus.CONFLICT),
+    FOREIGN_KEY_VIOLATION(4091, "Resource is currently in use and cannot be deleted", HttpStatus.CONFLICT),
 
-    USER_DISABLED(1402, "User account is disabled", HttpStatus.FORBIDDEN);
+    // Server Errors (500)
+    UNEXPECTED_ERROR(5000, "An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int id;
     private final String description;

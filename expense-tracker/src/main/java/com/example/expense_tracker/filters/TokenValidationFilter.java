@@ -3,11 +3,12 @@ package com.example.expense_tracker.filters;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import com.example.expense_tracker.Services.JwtService;
 import com.example.expense_tracker.Services.UserService;
@@ -25,45 +26,48 @@ public class TokenValidationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final HandlerExceptionResolver resolver;
 
-    public TokenValidationFilter(JwtService jwtService, UserService userService) {
+    public TokenValidationFilter(JwtService jwtService,
+            UserService userService,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         this.jwtService = jwtService;
         this.userService = userService;
+        this.resolver = resolver;
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
+    protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String authHeader = request.getHeader("Authorization");
 
-        String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+
+            // If token is invalid, throw custom ApiException
+            if (!jwtService.isTokenValid(token)) {
+                throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
+            }
+
+            String email = jwtService.extractEmail(token);
+            User user = userService.getUser(email);
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user, null, List.of());
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request, response);
-            return;
+
+        } catch (Exception e) {
+            // it hands the exception over to RestControllerAdvice
+            resolver.resolveException(request, response, null, e);
         }
-
-        String token = authHeader.substring(7);
-
-        if (!jwtService.isTokenValid(token)) {
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
-        }
-
-        String email = jwtService.extractEmail(token);
-
-        User user = userService.getUser(email);
-
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                user, // principal
-                null, // credentials
-                List.of() // authorities
-        );
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-
-        filterChain.doFilter(request, response);
     }
 }

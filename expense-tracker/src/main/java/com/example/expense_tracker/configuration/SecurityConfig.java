@@ -11,7 +11,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import com.example.expense_tracker.enums.ErrorCode;
+import com.example.expense_tracker.exceptions.ApiException;
 import com.example.expense_tracker.filters.TokenValidationFilter;
 
 import io.swagger.v3.oas.models.Components;
@@ -22,6 +25,12 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+        private final HandlerExceptionResolver resolver;
+
+        public SecurityConfig(HandlerExceptionResolver resolver) {
+                this.resolver = resolver;
+        }
+
         // makes password Encoder injectable everywhere
         @Bean
         public PasswordEncoder passwordEncoder() {
@@ -53,7 +62,15 @@ public class SecurityConfig {
                                 // Register JWT filter
                                 .addFilterBefore(
                                                 tokenValidationFilter,
-                                                UsernamePasswordAuthenticationFilter.class);
+                                                UsernamePasswordAuthenticationFilter.class)
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        // This part runs ONLY if the user didn't provide a token
+                                                        // and tried to access a protected URL.
+                                                        resolver.resolveException(request, response, null,
+                                                                        new ApiException(
+                                                                                        ErrorCode.AUTHORIZATION_FAILED));
+                                                }));
 
                 return http.build();
         }

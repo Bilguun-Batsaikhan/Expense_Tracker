@@ -39,7 +39,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        logger.info("Fetching category with id={}", id);
+        logger.info("Admin fetching category with id={}", id);
         return categoryMapper.toDto(category);
     }
 
