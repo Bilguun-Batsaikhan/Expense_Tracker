@@ -1,8 +1,9 @@
 package com.example.expense_tracker.controllers;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.expense_tracker.Services.CategoryService;
 import com.example.expense_tracker.dto.category.CategoryRequestDto;
 import com.example.expense_tracker.dto.category.CategoryResponseDto;
+import com.example.expense_tracker.dto.pagination.PagedResponse;
+import com.example.expense_tracker.dto.pagination.PaginationMetaData;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
@@ -28,8 +31,11 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDto>> getCategory() {
-        return ResponseEntity.ok(categoryService.getCategoriesForCurrentUser());
+    public ResponseEntity<PagedResponse<CategoryResponseDto>> getCategory(Pageable pageable) {
+        Page<CategoryResponseDto> p = categoryService.getCategoriesForCurrentUser(pageable);
+        PaginationMetaData pData = new PaginationMetaData(p.getNumber(), p.getSize(), p.getTotalElements(),
+                p.getTotalPages(), p.isLast());
+        return ResponseEntity.ok(new PagedResponse<>(p.getContent(), pData));
     }
 
     @PostMapping

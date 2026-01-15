@@ -44,7 +44,9 @@ public class User {
     @Column(name = "full_name")
     @NotNull
     private String fullName;
-    private boolean enabled;
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -60,6 +62,7 @@ public class User {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "users_id"), inverseJoinColumns = @JoinColumn(name = "roles_id"))
     private Set<Role> roles = new HashSet<>();

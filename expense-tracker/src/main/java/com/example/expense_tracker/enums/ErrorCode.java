@@ -21,7 +21,9 @@ public enum ErrorCode {
 
     FOREIGN_KEY_CONSTRAINT_VIOLATION(1451, "Foreign key constraint violation", HttpStatus.CONFLICT),
     DUPLICATE_ENTRY(1062, "Duplicate entry", HttpStatus.CONFLICT),
-    INVALID_EMAIL(1401, "Invalid email", HttpStatus.BAD_REQUEST);
+    INVALID_EMAIL(1401, "Invalid email", HttpStatus.BAD_REQUEST),
+
+    USER_DISABLED(1402, "User account is disabled", HttpStatus.FORBIDDEN);
 
     private final int id;
     private final String description;

@@ -3,6 +3,12 @@ package com.example.expense_tracker.Services;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.expense_tracker.Repositories.CategoryRepository;
@@ -20,6 +26,8 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
     private final UserService userService;
 
+    private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
+
     public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper,
             UserService userService) {
         this.categoryRepository = categoryRepository;
@@ -27,38 +35,41 @@ public class CategoryService {
         this.userService = userService;
     }
 
-    // Only for ADMIN role usage, will update later when roles are added
     public CategoryResponseDto getCategoryById(UUID id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        logger.info("Fetching category with id={}", id);
         return categoryMapper.toDto(category);
     }
 
-    // Only for ADMIN role usage, will update later when roles are added
     public List<CategoryResponseDto> getCategoriesForAdmin(String userEmail) {
-        // 1. Fetch only categories for the specific user where that user is not
-        // "soft-deleted"
         List<Category> categories = categoryRepository.findAllByUserEmailAndUserEnabledTrue(userEmail);
 
         if (categories.isEmpty()) {
+            // Optional: could log a warning here if needed
             throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND);
         }
 
+        logger.info("Admin fetching categories for user email: {}", userEmail);
         return categories.stream()
                 .map(categoryMapper::toDto)
                 .toList();
     }
 
-    public List<CategoryResponseDto> getCategoriesForCurrentUser() {
+    public Page<CategoryResponseDto> getCategoriesForCurrentUser(Pageable pageable) {
         String email = userService.getCurrentUser().getEmail();
-        List<Category> categories = categoryRepository.findAllByUserEmail(email);
+        Pageable safPageable = PageRequest.of(Math.max(pageable.getPageNumber(), 0),
+                Math.min(pageable.getPageSize(), 50), Sort.by("name"));
+
+        Page<Category> categories = categoryRepository.findAllByIsDefaultTrueOrUserEmail(email, safPageable);
+
         if (categories.isEmpty()) {
             throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND);
         }
-        return categories
-                .stream()
-                .map(categoryMapper::toDto)
-                .toList();
+
+        logger.info("Fetching paged categories for user: {}", email);
+        return categories.map(categoryMapper::toDto);
     }
 
     public CategoryResponseDto createCategoryForCurrentUser(CategoryRequestDto dto) {
@@ -67,11 +78,13 @@ public class CategoryService {
         if (categoryRepository.existsByNameAndUserEmail(dto.getName(), currentUser.getEmail())) {
             throw new ApiException(ErrorCode.DUPLICATE_ENTRY);
         }
+
         Category category = categoryMapper.toEntity(dto);
-        System.out.println("Mapped Category Name: " + category.getName());
         category.setUser(currentUser);
 
         Category savedCategory = categoryRepository.save(category);
+
+        logger.info("Category '{}' created for user: {}", savedCategory.getName(), currentUser.getEmail());
         return categoryMapper.toDto(savedCategory);
     }
 
@@ -79,27 +92,33 @@ public class CategoryService {
         User currentUser = userService.getCurrentUser();
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
+
         if (!currentUser.getEmail().equals(category.getUser().getEmail()))
             throw new ApiException(ErrorCode.FORBIDDEN);
+
         if (category.isDefault())
-            new ApiException(ErrorCode.INVALID_INPUT);
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
+
+        logger.info("Category with id={} updated by user: {}", id, currentUser.getEmail());
         return categoryMapper.toDto(category);
     }
 
     public String deleteCategoryForCurrentUser(UUID id) {
         String currentUserEmail = userService.getCurrentUser().getEmail();
 
-        // 1. Fetch the category first
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
-        // 2. Ownership Check: Is this the user's category?
-        // (Admins might be bypassed here)
+
         if (!category.getUser().getEmail().equals(currentUserEmail) || category.isDefault()) {
             throw new ApiException(ErrorCode.FORBIDDEN);
         }
+
         categoryRepository.delete(category);
+
+        logger.info("Category with id={} was deleted by user: {}", id, currentUserEmail);
         return "Category: " + id + " is deleted";
     }
 }

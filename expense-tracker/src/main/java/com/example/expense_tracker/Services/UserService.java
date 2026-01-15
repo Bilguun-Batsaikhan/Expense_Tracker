@@ -31,6 +31,7 @@ public class UserService {
 
     public String registerUser(RegisterDto registerDto) {
         User user = userMapper.toEntity(registerDto);
+        user.setEnabled(true); // new user is always enabled
         user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
         userRepository.save(user);
 
@@ -40,6 +41,10 @@ public class UserService {
     public User loginUser(LoginDto loginDto) {
         User user = userRepository.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new ApiException(ErrorCode.AUTHENTICATION_FAILED));
+        if (!user.isEnabled()) {
+            throw new ApiException(ErrorCode.USER_DISABLED);
+        }
+
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorCode.AUTHENTICATION_FAILED);
         }
