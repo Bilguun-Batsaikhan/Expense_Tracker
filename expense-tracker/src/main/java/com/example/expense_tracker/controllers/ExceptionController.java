@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,21 @@ public class ExceptionController {
         }
 
         private static final Logger logger = LoggerFactory.getLogger(ExceptionController.class);
+
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+                String correlationId = MDC.get("X-Correlation-Id");
+
+                ApiError error = ApiError.builder()
+                                .code(ErrorCode.ACCESS_DENIED.name())
+                                .message(ErrorCode.ACCESS_DENIED.getDescription())
+                                .status(ErrorCode.ACCESS_DENIED.getHttpStatus().value())
+                                .correlationId(correlationId)
+                                .timestamp(Instant.now())
+                                .build();
+
+                return ResponseEntity.status(ErrorCode.ACCESS_DENIED.getHttpStatus()).body(error);
+        }
 
         @ExceptionHandler(ApiException.class)
         public ResponseEntity<ApiError> handleApiExceptions(ApiException exception) {

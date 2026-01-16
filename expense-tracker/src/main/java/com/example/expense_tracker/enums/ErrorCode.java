@@ -10,11 +10,12 @@ public enum ErrorCode {
     AUTHENTICATION_FAILED(4010, "Authentication failed", HttpStatus.UNAUTHORIZED),
     INVALID_ACCESS_TOKEN(4011, "Invalid access token", HttpStatus.UNAUTHORIZED),
     EXPIRED_ACCESS_TOKEN(4012, "Expired access token", HttpStatus.UNAUTHORIZED),
+    AUTHORIZATION_FAILED(4013, "Authorization check failed", HttpStatus.UNAUTHORIZED),
 
     // Permission Errors (403)
     FORBIDDEN(4030, "You do not have permission to access this resource", HttpStatus.FORBIDDEN),
-    AUTHORIZATION_FAILED(4031, "Authorization check failed", HttpStatus.FORBIDDEN),
     USER_DISABLED(4032, "User account is disabled", HttpStatus.FORBIDDEN),
+    ACCESS_DENIED(4033, "Access denied", HttpStatus.FORBIDDEN),
 
     // Request Errors (400 / 404 / 409)
     RESOURCE_NOT_FOUND(4040, "Resource not found", HttpStatus.NOT_FOUND),

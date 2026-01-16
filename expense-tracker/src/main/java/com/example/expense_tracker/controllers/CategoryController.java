@@ -60,7 +60,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<CategoryResponseDto> getCategoryById(@PathVariable UUID id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
@@ -70,9 +70,9 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Categories found"),
             @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
     })
-    // /category/admin/user?email=test@example.com
+    // /category/admin?email=test@example.com
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/user") // Changed path to avoid conflict with the default GET
+    @GetMapping("/admin") // Changed path to avoid conflict with the default GET
     public ResponseEntity<List<CategoryResponseDto>> getCategoryByEmail(@RequestParam String email) {
         return ResponseEntity.ok(categoryService.getCategoriesForAdmin(email));
     }

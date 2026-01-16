@@ -46,7 +46,7 @@ public class ExpenseController {
                         @ApiResponse(responseCode = "403", description = "AUTHORIZATION_FAILED"),
                         @ApiResponse(responseCode = "404", description = "RESOURCE_NOT_FOUND")
         })
-        @PreAuthorize("hasRole('USER')")
+        @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @PostMapping
         public ResponseEntity<ExpenseResponseDto> createExpense(
                         @Valid @RequestBody ExpenseRequestDto request) {
@@ -61,7 +61,7 @@ public class ExpenseController {
                 return ResponseEntity.created(location).body(saved);
         }
 
-        @PreAuthorize("hasRole('USER')") // add also admin?
+        @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @Operation(summary = "Get expense by id")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Expense found"),
@@ -77,6 +77,7 @@ public class ExpenseController {
                 return ResponseEntity.ok(expenseService.getExpenseForCurrentUser(id));
         }
 
+        @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @Operation(summary = "Get expenses with pagination")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Expenses found"),
@@ -93,6 +94,7 @@ public class ExpenseController {
                 return ResponseEntity.ok(new PagedResponse<>(page.getContent(), pData));
         }
 
+        @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @Operation(summary = "Update expense by id")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Expense updated"),
@@ -106,6 +108,7 @@ public class ExpenseController {
                 return ResponseEntity.ok(expenseService.update(req, id));
         }
 
+        @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @Operation(summary = "Delete expense by id")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Expense delted"),

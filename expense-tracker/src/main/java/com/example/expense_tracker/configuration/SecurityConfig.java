@@ -58,6 +58,12 @@ public class SecurityConfig {
                                                                 "/swagger-ui/**",
                                                                 "/swagger-ui.html")
                                                 .permitAll()
+                                                // if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                                                // filterChain.doFilter(request, response);
+                                                // return;
+                                                // }
+                                                // the below runs after the above. Checks security context and if it's
+                                                // null throws exception
                                                 .anyRequest().authenticated())
 
                                 // Register JWT filter
@@ -71,6 +77,13 @@ public class SecurityConfig {
                                                         resolver.resolveException(request, response, null,
                                                                         new ApiException(
                                                                                         ErrorCode.AUTHORIZATION_FAILED));
+                                                }).accessDeniedHandler((request, response, accessDeniedException) -> {
+                                                        // handles “logged in but forbidden”
+                                                        resolver.resolveException(
+                                                                        request,
+                                                                        response,
+                                                                        null,
+                                                                        new ApiException(ErrorCode.ACCESS_DENIED));
                                                 }));
 
                 return http.build();
