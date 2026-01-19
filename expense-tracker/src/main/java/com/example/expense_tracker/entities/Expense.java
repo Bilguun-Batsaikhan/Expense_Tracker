@@ -16,6 +16,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Table(name = "expenses")
 @Entity
 public class Expense {
@@ -35,7 +37,8 @@ public class Expense {
     private String description;
     @Column(name = "expense_date")
     private LocalDate expenseDate;
-    private boolean deleted;
+    @Builder.Default
+    private boolean deleted = false;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -46,11 +49,17 @@ public class Expense {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    // If @ManyToOne ever gets cascade = PERSIST / ALL (now or later), Hibernate may
+    // try to persist the new User(id) as a brand-new row. If I use
+    // public User(UUID id) {
+    // this.id = id;
+    // }
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

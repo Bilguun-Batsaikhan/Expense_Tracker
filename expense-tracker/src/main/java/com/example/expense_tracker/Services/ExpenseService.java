@@ -1,6 +1,5 @@
 package com.example.expense_tracker.Services;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -23,8 +22,12 @@ import com.example.expense_tracker.enums.ErrorCode;
 import com.example.expense_tracker.exceptions.ApiException;
 import com.example.expense_tracker.mapper.ExpenseMapper;
 
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+
 @Service
 public class ExpenseService {
+    private final EntityManager entityManager;
     private final ExpenseRepository expenseRepository;
     private final CategoryRepository categoryRepository;
     private final ExpenseMapper expenseMapper;
@@ -32,31 +35,34 @@ public class ExpenseService {
     private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
     public ExpenseService(ExpenseRepository expenseRepository, CategoryRepository categoryRepository,
-            ExpenseMapper expenseMapper, UserService userService) {
+            ExpenseMapper expenseMapper, UserService userService, EntityManager entityManager) {
         this.expenseRepository = expenseRepository;
         this.expenseMapper = expenseMapper;
         this.userService = userService;
         this.categoryRepository = categoryRepository;
+        this.entityManager = entityManager;
     }
 
+    @Transactional
     public ExpenseResponseDto create(ExpenseRequestDto req) {
         Expense entity = expenseMapper.toEntity(req);
         Category category = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
         entity.setCategory(category);
         CustomUserDetails currentUser = userService.getCurrentUserDetails();
-        // “Attach this entity by ID, do not fetch it”
-        entity.setUser(new User(currentUser.getId()));
+        UUID userId = currentUser.getId();
+        User userRef = entityManager.getReference(User.class, userId);
+        entity.setUser(userRef);
+
         expenseRepository.save(entity);
         logger.info("Expense is created for for user {}", currentUser.getUsername());
         return expenseMapper.toDto(entity);
     }
 
     public ExpenseResponseDto getExpenseForCurrentUser(UUID id) {
-        Expense entity = expenseRepository.findById(id)
+        CustomUserDetails currentUser = userService.getCurrentUserDetails();
+        Expense entity = expenseRepository.findByIdAndUserIdAndDeletedFalse(id, currentUser.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
-        if (!validateUser(entity.getUser()))
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
         logger.info("Fetching expense with id={}", id);
         return expenseMapper.toDto(entity);
     }
@@ -70,44 +76,40 @@ public class ExpenseService {
                 Math.min(pageable.getPageSize(), 50),
                 Sort.by("expenseDate").descending());
 
-        Page<Expense> page = expenseRepository.findByUserEmailAndDeletedFalse(currentUserEmail, safePageable);
+        Page<Expense> page = expenseRepository.findByUserIdAndDeletedFalse(currentUser.getId(), safePageable);
 
         logger.info("Fetching paged expenses for user: {}", currentUserEmail);
         return page.map(expenseMapper::toDto);
     }
 
+    @Transactional
     public ExpenseResponseDto update(ExpenseRequestDto req, UUID id) {
-        Expense entity = expenseRepository.findById(id)
+        CustomUserDetails currentuser = userService.getCurrentUserDetails();
+        Expense entity = expenseRepository.findByIdAndUserIdAndDeletedFalse(id, currentuser.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
-        if (!validateUser(entity.getUser()))
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
 
         entity.setAmount(req.getAmount());
         entity.setCurrency(req.getCurrency());
         entity.setDescription(req.getDescription());
         entity.setExpenseDate(req.getExpenseDate());
-        if (!entity.getCategory().getId().equals(req.getCategoryId())) {
-            Optional<Category> category = categoryRepository.findById(req.getCategoryId());
-            if (category.isEmpty())
-                throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND);
-            entity.setCategory(category.get());
-        }
+
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
+        entity.setCategory(category);
+
         logger.info("Expense with id={} is updated", entity.getId());
         return expenseMapper.toDto(entity);
     }
 
+    @Transactional
     public ExpenseResponseDto delete(UUID id) {
-        Expense entity = expenseRepository.findById(id)
+        CustomUserDetails currentuser = userService.getCurrentUserDetails();
+        Expense entity = expenseRepository.findByIdAndUserIdAndDeletedFalse(id, currentuser.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
-        if (!validateUser(entity.getUser()))
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED);
+
         ExpenseResponseDto responseDto = expenseMapper.toDto(entity);
-        expenseRepository.delete(entity);
+        entity.setDeleted(true);
         logger.info("Expense with id={} is deleted", responseDto.getId());
         return responseDto;
-    }
-
-    public boolean validateUser(User user) {
-        return user.getId().equals(userService.getCurrentUserDetails().getId());
     }
 }
