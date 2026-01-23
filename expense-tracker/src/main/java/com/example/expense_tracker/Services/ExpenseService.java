@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.expense_tracker.Repositories.ExpenseRepository;
 import com.example.expense_tracker.Repositories.CategoryRepository;
@@ -23,7 +24,6 @@ import com.example.expense_tracker.exceptions.ApiException;
 import com.example.expense_tracker.mapper.ExpenseMapper;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
 @Service
 public class ExpenseService {
@@ -55,10 +55,11 @@ public class ExpenseService {
         entity.setUser(userRef);
 
         expenseRepository.save(entity);
-        logger.info("Expense is created for for user {}", currentUser.getUsername());
+        logger.info("Expense is created for for user {}", currentUser.getEmail());
         return expenseMapper.toDto(entity);
     }
 
+    @Transactional(readOnly = true)
     public ExpenseResponseDto getExpenseForCurrentUser(UUID id) {
         CustomUserDetails currentUser = userService.getCurrentUserDetails();
         Expense entity = expenseRepository.findByIdAndUserIdAndDeletedFalse(id, currentUser.getId())
@@ -67,9 +68,10 @@ public class ExpenseService {
         return expenseMapper.toDto(entity);
     }
 
+    @Transactional(readOnly = true)
     public Page<ExpenseResponseDto> getAll(Pageable pageable) {
         CustomUserDetails currentUser = userService.getCurrentUserDetails();
-        String currentUserEmail = currentUser.getUsername();
+        String currentUserEmail = currentUser.getEmail();
 
         Pageable safePageable = PageRequest.of(
                 Math.max(pageable.getPageNumber(), 0),
