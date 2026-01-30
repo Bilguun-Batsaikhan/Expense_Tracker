@@ -1,6 +1,7 @@
 package com.example.expense_tracker.filters;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,8 +50,8 @@ public class TokenValidationFilter extends OncePerRequestFilter {
             throw new org.springframework.security.authentication.BadCredentialsException("Invalid JWT");
         }
 
-        String email = jwtService.extractEmail(token);
-        User user = userService.getUser(email);
+        UUID userId = jwtService.extractUserId(token);
+        User user = userService.getUser(userId);
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
@@ -59,7 +60,9 @@ public class TokenValidationFilter extends OncePerRequestFilter {
                 null,
                 userDetails.getAuthorities());
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
         filterChain.doFilter(request, response);
 

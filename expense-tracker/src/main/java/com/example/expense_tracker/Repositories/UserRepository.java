@@ -9,4 +9,6 @@ import com.example.expense_tracker.entities.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByIdAndEnabledTrue(UUID id);
 }

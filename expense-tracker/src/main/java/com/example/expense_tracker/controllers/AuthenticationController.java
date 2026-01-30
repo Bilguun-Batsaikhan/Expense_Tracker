@@ -28,7 +28,6 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterDto registerDto) {
-
         return ResponseEntity.ok(userService.registerUser(registerDto));
     }
 

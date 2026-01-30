@@ -3,15 +3,12 @@ package com.example.expense_tracker.Services;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-// import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
-
 import com.example.expense_tracker.entities.Role;
 import com.example.expense_tracker.entities.User;
-// import com.example.expense_tracker.enums.ErrorCode;
-// import com.example.expense_tracker.exceptions.ApiException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -45,20 +42,9 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
+    public UUID extractUserId(String token) {
+        return UUID.fromString(extractAllClaims(token).get("userId", String.class));
     }
-
-    // public UUID extractUserId(String token) {
-    // Claims claims = extractAllClaims(token);
-    // String userId = claims.get("userId", String.class);
-
-    // if (userId == null) {
-    // throw new ApiException(ErrorCode.INVALID_ACCESS_TOKEN);
-    // }
-
-    // return UUID.fromString(userId);
-    // }
 
     public boolean isTokenValid(String token) {
         try {
@@ -73,7 +59,7 @@ public class JwtService {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
+                .parseClaimsJws(token) // does the real verification
                 .getBody();
     }
 

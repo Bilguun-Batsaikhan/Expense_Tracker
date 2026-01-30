@@ -3,6 +3,8 @@ package com.example.expense_tracker.Services;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -79,7 +81,8 @@ public class UserService {
         return user;
     }
 
-    public User getUser(String Email) {
-        return userRepository.findByEmail(Email).orElseThrow(() -> new ApiException(ErrorCode.AUTHENTICATION_FAILED));
+    public User getUser(UUID id) {
+        return userRepository.findByIdAndEnabledTrue(id)
+                .orElseThrow(() -> new ApiException(ErrorCode.AUTHENTICATION_FAILED));
     }
 }

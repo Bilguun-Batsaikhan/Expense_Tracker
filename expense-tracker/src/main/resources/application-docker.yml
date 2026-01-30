@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update # for easy sharing; consider validate + migrations later
+    properties:
+      hibernate:
+        format_sql: true
+
+# If you use Flyway, you can enable it here instead of ddl-auto update:
+# flyway:
+#   enabled: true

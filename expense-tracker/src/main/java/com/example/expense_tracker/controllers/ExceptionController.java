@@ -23,7 +23,6 @@ import com.example.expense_tracker.exceptions.ApiException;
 public class ExceptionController {
         public ExceptionController() {
                 super();
-                // TODO Auto-generated constructor stub
         }
 
         private static final Logger logger = LoggerFactory.getLogger(ExceptionController.class);
